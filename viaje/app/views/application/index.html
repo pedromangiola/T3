@@ -69,9 +69,14 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUaLtYNDNb1vzwJTctKb-CUnW
           map: map
         });
 
-        airports[key].addListener('click', function() {
-          infowindow.open(map, airports[key]);
-        });
+        var marcador = airports[key];
+
+        google.maps.event.addListener(marcador,'click', (function(marcador, infowindow) {
+          return function(){
+            infowindow.open(map, marcador);
+          };
+        })(marcador, infowindow));
+        airports[key].setMap(map);
 
       }
     });
@@ -80,15 +85,28 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUaLtYNDNb1vzwJTctKb-CUnW
     socket.on("FLIGHTS", function(data){
       for (var key in data){
         console.log(data[key]);
+
+
+        var contentString ='<h1>'+ data[key].code +'</h1>'+
+            '<h3>'+ data[key].plane +'</h3>'+
+            '<h3>'+ data[key].seats +'asientos </h3>'+
+            '<h3> Aerolinea '+ data[key].airline +'</h3>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 225});
+
         flights[data[key].code] = new google.maps.Marker({
           position: ({lat: 0, lng: 0}),
           map: map,
           icon: avion
         });
+
         var flightPlanCoordinates = [
           {lat: data[key].origin.airport_position[0], lng: data[key].origin.airport_position[1]},
           {lat: data[key].destination.airport_position[0], lng: data[key].destination.airport_position[1]}
         ];
+
         var flightPath = new google.maps.Polyline({
           path: flightPlanCoordinates,
           geodesic: true,
@@ -96,6 +114,14 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUaLtYNDNb1vzwJTctKb-CUnW
           strokeOpacity: 0.3,
           strokeWeight: 5
         });
+
+        var marcador = flights[data[key].code];
+
+        google.maps.event.addListener(marcador,'click', (function(marcador, infowindow) {
+          return function(){
+            infowindow.open(map, marcador);
+          };
+        })(marcador, infowindow));
 
         flightPath.setMap(map);
         lineas_vuelos[data[key].code] = [];
